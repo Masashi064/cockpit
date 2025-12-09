@@ -106,6 +106,13 @@ export function SiteHeader() {
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-40 rounded-md border border-slate-700 bg-slate-900 py-1 text-sm shadow-lg">
                 <Link
+                  href="/memo"
+                  className="block px-3 py-1 text-slate-100 hover:bg-slate-800"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Open memo
+                </Link>
+                <Link
                   href="/contact"
                   className="block px-3 py-1 text-slate-100 hover:bg-slate-800"
                   onClick={() => setMenuOpen(false)}

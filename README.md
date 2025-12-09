@@ -1,227 +1,225 @@
-# Dashboard Template
+# Cockpit
 
-A small opinionated template for building dashboard-style web apps
-(Volatility Dashboard, FIRE simulators, NISA tools, etc.) with:
+Cockpit is a self-management web app that works like a personal flight deck:
 
-- Next.js (App Router)
-- TypeScript
-- Supabase Auth (Google OAuth)
-- Reusable site header with login/logout + overflow menu
+- Set goals (from big “North Star” goals down to daily habits)
+- Track your progress with simple inputs
+- See your progress on a dashboard (cards + charts)
+- Write reflections and quick notes in a memo space
 
-This repository is meant to be a **starting point** you can copy and
-adapt for new side projects.
+Built with **Next.js + Supabase** and a dark, minimal UI.
 
 ---
 
-## 1. Features
+## Features
 
-- 🔐 **Login header**
-  - Supabase Auth (Google OAuth)
-  - Shows current user email and Logout button when authenticated
-  - “Contact developer” link is hidden under a ⋯ (overflow) menu
-- 🧱 **Simple layout**
-  - `SiteHeader` at the top
-  - Main content area with a max-width container
-- 📝 **Self-documenting home page**
-  - `app/page.tsx` explains how to reuse this template for future apps
-  - Contains example links/cards you can replace for each new project
+### 🧭 Goals
+
+Three types of goals:
+
+- **North Star Goal**  
+  - Big, long-term direction (e.g. “Be able to work fully remote by 2030”)
+  - Shown prominently but not tracked daily (no input required)
+
+- **Mid-term Goal**  
+  - Measurable goals (e.g. “Reach 68 kg”, “Do 200 English lessons”)
+  - Usually tracked with numbers over weeks/months
+
+- **Daily Habit**  
+  - Everyday actions (e.g. “Take English lesson”, “Go for a walk”)
+  - Suited for check-in style tracking
+
+### 📊 Tracker types
+
+Each goal can choose how it is tracked:
+
+- **Not set yet**
+  - Just keep the goal as text, no tracker
+- **Check-in (Done / Not done)**
+  - Press a button when you did it today
+  - History tab shows daily log
+- **Numeric (value input)**
+  - Input a number with optional unit  
+    (e.g. `76.5 kg`, `45 min`, `3 lessons`)
+  - You can also set:
+    - **Target value** (e.g. `68 kg`)
+    - **Target date** (optional)
+
+### 🏠 Dashboard (`/`)
+
+The dashboard is your “cockpit”:
+
+- Shows all active goals as cards
+- **Pinned goals** appear at the top
+- For each goal card:
+  - Goal type, tracker type
+  - Target value / target date (if set)
+  - Latest entry summary
+
+Pinned goals also get visuals:
+
+- **Pinned Check-in goals**
+  - Small calendar for the current month
+  - Days you marked as done are highlighted
+
+- **Pinned Numeric goals**
+  - Mini line chart of recent values
+  - **Target line** is drawn horizontally at the goal value  
+    (e.g. `68 kg` line across the chart)
+
+Click a card to open `/goals/[id]` and focus on input + history.
+
+### 🎯 Goal pages
+
+- `/goals` — list of all goals
+  - Filtered into pinned vs other goals
+  - Links to each goal detail
+- `/goals/new` — create goal
+  - Title, description
+  - Goal type (North Star / Mid-term / Daily Habit)
+  - Tracker type (Not set yet / Check-in / Numeric)
+  - Numeric settings (unit, target value, target date)
+  - “Pin this goal” (default: ON)
+- `/goals/[id]/edit` — edit goal settings
+- `/goals/[id]` — focus on this goal
+  - Add entries:
+    - Check-in: mark today as done + optional reflection
+    - Numeric: value + date + optional reflection
+  - History list (latest first)
+  - Each history row has a 🗑 button to delete an entry
+
+### 📝 Memo workspace (`/memo`)
+
+A lightweight personal memo space:
+
+- Multiple “topics” (left sidebar)
+- Rich text / checklist-style notes per topic
+- Data storage:
+  - If **logged in** → data is stored in Supabase (`memo_documents` table)
+  - If **not logged in** → data is saved in `localStorage` on the browser
+- Accessible from:
+  - Header 3-dot menu → **“Open memo”**
 
 ---
 
-## 2. Tech Stack
+## Tech stack
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **Language**: TypeScript
-- **Auth / Backend**: [Supabase](https://supabase.com/)
-- **Styling**: Tailwind-like utility classes (via global styles)
+- **Framework**: Next.js (App Router, React, TypeScript)
+- **Styling**: Tailwind CSS + custom dark theme
+- **Backend**: Supabase (Postgres + Auth)
+- **Auth**: Supabase Auth (email/password or other providers)
+- **State**: React hooks
 
 ---
 
-## 3. Getting Started (for this repo)
+## Getting started
 
-### Prerequisites
+### 1. Prerequisites
 
-- Node.js (v18+ recommended)
-- npm (or pnpm / yarn, if you prefer)
-- A Supabase project (for login), if you want to use auth
+- Node.js (LTS)
+- npm / pnpm / yarn
+- Supabase project
 
-### 3.1 Clone & install
+### 2. Clone & install
 
 ```bash
-git clone https://github.com/Masashi064/dashboard-template.git
-cd dashboard-template
-
+git clone <your-repo-url> cockpit
+cd cockpit
 npm install
+# or: pnpm install / yarn
 
-3.2 Environment variables
+3. Environment variables
 
 Create .env.local in the project root:
 
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 
-If you use Google OAuth, configure a Google provider in Supabase and set
-the redirect URL to:
+(If you later add server-side Supabase logic, you can also keep
+SUPABASE_SERVICE_ROLE_KEY for local scripts, but it is NOT required for the current UI.)
 
-https://your-domain.com/auth/callback
+4. Database schema (Supabase)
 
+Run something like the following SQL in Supabase:
 
-For local development, it will be:
+goals table
+create table public.goals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id),
 
-http://localhost:3000/auth/callback
+  title text not null,
+  description text,
 
+  goal_type text not null check (goal_type in ('north_star', 'mid_term', 'habit')),
+  tracker_type text check (tracker_type in ('checkin', 'numeric')),
 
-(このあたりは将来の自分が忘れがちなので、Supabase の設定と合わせて確認すること)
+  unit text,
+  target_value numeric,
+  target_date date,
 
-3.3 Run dev server
-npm run dev
+  is_pinned boolean not null default true,
+  is_hidden boolean not null default false,
+  sort_order integer not null default 1000,
 
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 
-Then open:
+create index goals_user_id_idx on public.goals (user_id);
 
-http://localhost:3000
+goal_entries table
+create table public.goal_entries (
+  id uuid primary key default gen_random_uuid(),
+  goal_id uuid not null references public.goals(id) on delete cascade,
 
+  entry_date date not null,
+  is_done boolean,
+  value numeric,
+  reflection text,
 
-You should see the dashboard template home page with the header at the top.
+  created_at timestamptz not null default now()
+);
 
-4. How to reuse this template for new apps
+create index goal_entries_goal_id_idx on public.goal_entries (goal_id);
+create index goal_entries_entry_date_idx on public.goal_entries (entry_date);
 
-There are two main ways to reuse this dashboard template.
+memo_documents table
+create table public.memo_documents (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  data jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
 
-4.1 Use GitHub “Use this template”
+  unique (user_id)
+);
 
-Recommended for new, independent projects.
 
-Open this repository on GitHub.
+Recommended: enable RLS and add policies
+user_id = auth.uid() for select, insert, update, delete.
 
-Click “Use this template” → “Create a new repository”.
+Scripts
+npm run dev     # start dev server
+npm run build   # production build
+npm run start   # start production server (after build)
+npm run lint    # lint code
 
-Give it a new name, e.g. nisa-simulator, fire-dashboard, etc.
+Roadmap / Ideas
 
-Clone that new repository locally and start editing.
+Streaks & statistics per goal (best streak, current streak)
 
-This keeps Git history clean and separates each app.
+Weekly / monthly summary cards
 
-4.2 Clone & change remote (alternative)
+Tags / focus areas for grouping goals
 
-Alternatively:
+Export / import data (JSON)
 
-git clone https://github.com/Masashi064/dashboard-template.git my-new-app
-cd my-new-app
+More keyboard shortcuts and mobile tweaks
 
+Optional notifications / reminders
 
-Then:
+License
 
-Remove the existing Git remote:
-
-git remote remove origin
-
-
-Create a new repository on GitHub (e.g. my-new-app)
-
-Add it as the remote:
-
-git remote add origin https://github.com/yourname/my-new-app.git
-git push -u origin main
-
-
-Now you have a new project with this template as the starting code.
-
-5. Key Files
-5.1 components/SiteHeader.tsx
-
-Main site header
-
-Shows:
-
-Site title (linked to /)
-
-Login / Logout button via Supabase Auth
-
-User email when logged in
-
-⋯ menu with “開発者へ連絡 (Contact developer)” link
-
-You will typically edit:
-
-The site title text
-
-Links in the overflow menu
-
-(Optionally) logo / branding
-
-5.2 lib/supabaseClient.ts
-
-Supabase client configuration using NEXT_PUBLIC_SUPABASE_URL and
-NEXT_PUBLIC_SUPABASE_ANON_KEY.
-
-Used by SiteHeader for authentication.
-
-If you create a new Supabase project for each app, just update the
-environment variables in .env.local.
-
-5.3 app/page.tsx
-
-Template for the top page of the app.
-
-Includes:
-
-Short description of the template
-
-“How to use this template” notes (自分用メモ)
-
-Example cards/links to other pages (alerts, docs, contact, etc.)
-
-For a new app, you will typically:
-
-Replace the explanation text with the new app’s concept
-
-Replace example links/cards with your real pages
-
-Remove any sections you don’t need
-
-6. Typical customization steps (for future me)
-
-When starting a new dashboard app from this template:
-
-Rename the project
-
-Change the repository name on GitHub
-
-Optionally update package.json → "name": "your-new-app-name"
-
-Update branding
-
-Edit SiteHeader title (and logo if you add one)
-
-Adjust colors / text to fit the new project
-
-Configure Supabase
-
-Create or choose a Supabase project
-
-Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-Configure OAuth provider(s) (e.g. Google) and redirect URL
-
-Create feature pages
-
-Add new routes under app/ (e.g. app/alerts/page.tsx,
-app/simulator/page.tsx, etc.)
-
-Replace example links in app/page.tsx with your actual pages
-
-Clean up
-
-Delete unused sample pages or components
-
-Update this README to describe the new app if it becomes “real”
-
-7. License
-
-This template is primarily for personal / side-project use, but feel free
-to reuse and modify it as you like.
-
-(If you later decide to make this public for others, you can add an
-explicit OSS license here, e.g. MIT.)
+Personal project.
+Feel free to read the code and get ideas, but please ask before using this as a commercial template.
